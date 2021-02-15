@@ -1,7 +1,5 @@
 package com.bjenst;
 
-import jdk.nashorn.internal.objects.annotations.Getter;
-import jdk.nashorn.internal.objects.annotations.Setter;
 import org.apache.log4j.Logger;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
@@ -14,7 +12,6 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 class Bot extends TelegramLongPollingBot {
 
@@ -50,7 +47,7 @@ class Bot extends TelegramLongPollingBot {
 //                Scanner in = new Scanner(System.in);
 //                city = in.nextLine();
                 try {
-                    getWether d = new getWether();
+                    getWeather d = new getWeather();
                     sendMsg(msg, d.getWeather(city));
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
