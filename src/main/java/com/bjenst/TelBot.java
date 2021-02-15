@@ -1,5 +1,8 @@
 package com.bjenst;
 
+import jdk.nashorn.internal.objects.annotations.Getter;
+import jdk.nashorn.internal.objects.annotations.Setter;
+import org.apache.log4j.Logger;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
@@ -14,15 +17,23 @@ import java.util.List;
 import java.util.Scanner;
 
 class Bot extends TelegramLongPollingBot {
-    ReplyKeyboardMarkup keyb = new ReplyKeyboardMarkup();
+
+    private static final Logger log = Logger.getLogger(Bot.class);
+
+    String userName;
+    String token;
+
+    public Bot (String userName, String token){
+        this.userName = userName;
+        this.token = token;
+    }
+
     @Override
     public void onUpdateReceived(Update e) {
+        log.debug("new Update recieve");
         Message msg = e.getMessage();// Это нам понадобится
         String txt = msg.getText();
 
-        System.out.println(txt);
-
-//        if(!txt.isEmpty()){
         switch (txt){
             case "/start":{
                 sendMsg(msg,"Привет! чего будем делать?");
@@ -34,9 +45,10 @@ class Bot extends TelegramLongPollingBot {
             }
             case "weather": {
                 String city;
-                sendMsg(msg, "Введите город:");
-                Scanner in = new Scanner(System.in);
-                city = in.nextLine();
+//                sendMsg(msg, "Введите город:");
+                city = "Kharkov";
+//                Scanner in = new Scanner(System.in);
+//                city = in.nextLine();
                 try {
                     getWether d = new getWether();
                     sendMsg(msg, d.getWeather(city));
@@ -48,40 +60,34 @@ class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendMsg(Message msg, String text) {
-        SendMessage s = new SendMessage();
-//        System.out.println(msg.getFrom().getUserName());
-        s.setChatId(msg.getChatId()); // Боту может писать не один человек, и поэтому чтобы отправить сообщение, грубо говоря нужно узнать куда его отправлять
-        s.setText(text);
+    private void sendMsgButt(SendMessage message){
+        ReplyKeyboardMarkup keyb = new ReplyKeyboardMarkup();
+
         // Создаем клавиуатуру
-        s.setReplyMarkup(keyb);
+        message.setReplyMarkup(keyb);
         keyb.setSelective(true);
         keyb.setResizeKeyboard(true);
         keyb.setOneTimeKeyboard(true);
-
         // Создаем список строк клавиатуры
         List<KeyboardRow> keyboard = new ArrayList<>();
 
-        // Первая строчка клавиатуры
         KeyboardRow keyboardFirstRow = new KeyboardRow();
-        // Добавляем кнопки в первую строчку клавиатуры
         keyboardFirstRow.add("узнать свой телеграм логин");
         keyboardFirstRow.add("weather");
 
-//        // Вторая строчка клавиатуры
-//        KeyboardRow keyboardSecondRow = new KeyboardRow();
-//        // Добавляем кнопки во вторую строчку клавиатуры
-//        keyboardSecondRow.add("Команда 3");
-//        keyboardSecondRow.add("Команда 4");
-
-        // Добавляем все строчки клавиатуры в список
         keyboard.add(keyboardFirstRow);
-//        keyboard.add(keyboardSecondRow);
-        // и устанваливаем этот список нашей клавиатуре
         keyb.setKeyboard(keyboard);
 
+    }
+
+    private void sendMsg(Message msg, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(msg.getChatId()); // Боту может писать не один человек, и поэтому чтобы отправить сообщение, грубо говоря нужно узнать куда его отправлять
+        message.setText(text);
+
         try { //Чтобы не крашнулась программа при вылете Exception
-            execute(s);
+            sendMsgButt(message);
+            execute(message);
         } catch (TelegramApiException e){
             e.printStackTrace();
         }
@@ -89,12 +95,12 @@ class Bot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "bjens_bot";
+        return userName;
     }
 
     @Override
     public String getBotToken() {
-        return "788825648:AAFwgXplFncCtcm1oJeRtJpKLTkeaiF_Frg";
+        return token;
     }
 }
 
