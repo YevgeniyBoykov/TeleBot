@@ -5,6 +5,7 @@ import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
@@ -16,43 +17,41 @@ import java.util.List;
 class Bot extends TelegramLongPollingBot {
 
     private static final Logger log = Logger.getLogger(Bot.class);
+    private final String botName;
+    private final String token;
 
-    String userName;
-    String token;
-
-    public Bot (String userName, String token){
-        this.userName = userName;
+    public Bot(String botName, String token){
+        this.botName = botName;
         this.token = token;
     }
 
     @Override
     public void onUpdateReceived(Update e) {
-        log.debug("new Update recieve");
+//        log.debug("new Update recieve");
         Message msg = e.getMessage();// Это нам понадобится
-        String txt = msg.getText();
+        Model model = new Model();
 
-        switch (txt){
-            case "/start":{
-                sendMsg(msg,"Привет! чего будем делать?");
-                break;
-            }
-            case "узнать свой телеграм логин":{
-                sendMsg(msg, msg.getFrom().getUserName());
-                break;
-            }
-            case "weather": {
-                String city;
-//                sendMsg(msg, "Введите город:");
-                city = "Kharkov";
-//                Scanner in = new Scanner(System.in);
-//                city = in.nextLine();
-                try {
-                    getWeather d = new getWeather();
-                    sendMsg(msg, d.getWeather(city));
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
+        if (msg != null && msg.hasText()) {
+            switch (msg.getText()) {
+                case "/start": {
+                    sendMsg(msg, "для получения погоды введите название города.");
+                    break;
                 }
-                break;
+                case "узнать свой телеграм логин": {
+                    String userName = msg.getFrom().getUserName();
+                    log.info("get userName from " + userName);
+                    sendMsg(msg, userName);
+                    break;
+                }
+
+                default:
+                    try {
+                        sendMsg(msg, Weather.getWeather(msg.getText(), model, msg.getFrom().getUserName()));
+                    } catch (IOException ioException) {
+                        sendMsg(msg, "Город не найден");
+                        log.info(msg.getFrom().getUserName());
+                        log.info("Город не найден");
+                    }
             }
         }
     }
@@ -69,12 +68,12 @@ class Bot extends TelegramLongPollingBot {
         List<KeyboardRow> keyboard = new ArrayList<>();
 
         KeyboardRow keyboardFirstRow = new KeyboardRow();
-        keyboardFirstRow.add("узнать свой телеграм логин");
-        keyboardFirstRow.add("weather");
+        // Добавляем кнопки в первую строчку клавиатуры
+        keyboardFirstRow.add(new KeyboardButton("узнать свой телеграм логин"));
+//        keyboardFirstRow.add(new KeyboardButton("weather"));
 
         keyboard.add(keyboardFirstRow);
         keyb.setKeyboard(keyboard);
-
     }
 
     private void sendMsg(Message msg, String text) {
@@ -85,14 +84,14 @@ class Bot extends TelegramLongPollingBot {
         try { //Чтобы не крашнулась программа при вылете Exception
             sendMsgButt(message);
             execute(message);
-        } catch (TelegramApiException e){
+        } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
 
     @Override
     public String getBotUsername() {
-        return userName;
+        return botName;
     }
 
     @Override
